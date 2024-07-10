@@ -1,0 +1,128 @@
+{
+    // Use o IntelliSense para saber mais sobre os atributos possíveis.
+    // Focalizar para exibir as descrições dos atributos existentes.
+    // Para obter mais informações, acesse: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "v0\\siat_mobile",
+            "cwd": "v0\\siat_mobile",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "v0\\siat_mobile (profile mode)",
+            "cwd": "v0\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "v0\\siat_mobile (release mode)",
+            "cwd": "v0\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "v1\\siat_mobile",
+            "cwd": "v1\\siat_mobile",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "v1\\siat_mobile (profile mode)",
+            "cwd": "v1\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "v1\\siat_mobile (release mode)",
+            "cwd": "v1\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "v2\\siat_mobile",
+            "cwd": "v2\\siat_mobile",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "v2\\siat_mobile (profile mode)",
+            "cwd": "v2\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "v2\\siat_mobile (release mode)",
+            "cwd": "v2\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "v3\\siat_mobile",
+            "cwd": "v3\\siat_mobile",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "v3\\siat_mobile (profile mode)",
+            "cwd": "v3\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "v3\\siat_mobile (release mode)",
+            "cwd": "v3\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "v3\\siat_mobile",
+            "cwd": "v3\\siat_mobile",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "v3\\siat_mobile (profile mode)",
+            "cwd": "v3\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "v3\\siat_mobile (release mode)",
+            "cwd": "v3\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "v\\siat_mobile",
+            "cwd": "v\\siat_mobile",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "v\\siat_mobile (profile mode)",
+            "cwd": "v\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "v\\siat_mobile (release mode)",
+            "cwd": "v\\siat_mobile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

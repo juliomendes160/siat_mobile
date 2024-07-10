@@ -1,0 +1,95 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+def environment = [:]
+if (project.hasProperty('dart-defines')) {
+    def dartDefines = project.property('dart-defines')
+    def decodedBytes = Base64.getDecoder().decode(dartDefines)
+    def decodedString = new String(decodedBytes)
+    decodedString
+    .split(',')
+    .each { keyValueString ->
+        def (key, value) = keyValueString.split('=')
+        environment[key] = value
+    }
+}
+
+def file = file("../../settings/json/${environment.app}.json")
+def settings = new groovy.json.JsonSlurper().parseText(file.text)
+
+// def properties = new Properties()
+// def propertiesFile = file("../../assets/config/${environment.app}.properties")
+// if (propertiesFile.exists()) {
+//     propertiesFile.withReader('UTF-8') { reader ->
+//         properties.load(reader)
+//     }
+// }
+
+android {
+    namespace "com.example.siat_mobile"
+    compileSdk flutter.compileSdkVersion
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // applicationId "com.example.siat_mobile"
+        applicationId settings.applicationId
+        // You can update the following values to match your application needs.
+        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        manifestPlaceholders += [applicationLabel: settings.label]
+        resValue "string", "applicationIcon", "@mipmap/${settings.icon}"
+        // buildConfigField "String", "applicationId", properties.applicationId
+    }
+
+    buildTypes {
+        release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {}

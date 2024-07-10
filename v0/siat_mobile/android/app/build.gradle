@@ -1,0 +1,103 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+def dartEnvironmentVariable = null
+if (project.hasProperty('dart-defines')) {
+    def defines = project.property('dart-defines')
+    def keyValue = defines.split('=')
+    dartEnvironmentVariable = [(keyValue[0]): keyValue[1]]
+}
+
+def dartEnvironmentVariables = []
+if (project.hasProperty('dart-defines')) {
+    dartEnvironmentVariables = project.property('dart-defines')
+    .split(',')
+    .collectEntries { entry ->
+        def pair = new String(entry.decodeBase64(), 'UTF-8').split('=')
+        [(pair.first()): pair.last()]
+    }
+    
+    // println "Definições capturadas do --dart-define: ${dartEnvironmentVariables['app']}"
+}
+
+def jsonFile = file("../../json/default.json")
+def jsonFile = file("../../json/${dartEnvironmentVariables.app}.json")
+if (jsonFile.exists()) {
+    def jsonString = jsonFile.text
+    def jsonData = new groovy.json.JsonSlurper().parseText(jsonString)
+} else {
+    println "O arquivo json não foi encontrado no diretório especificado."
+}
+// def variavel1 = jsonData.uri
+// project.ext.dartDefines = [
+//     'variavel1': variavel1
+// ]
+
+android {
+    namespace "com.example.siat_mobile"
+    compileSdk flutter.compileSdkVersion
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // applicationId "com.example.siat_mobile"
+        applicationId jsonData.applicationId
+        // You can update the following values to match your application needs.
+        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        manifestPlaceholders += [applicationLabel: jsonData.label]
+        resValue "string", "applicationIcon", "@mipmap/${jsonData.icon}"
+        // buildConfigField "String", "applicationId", jsonData.applicationId
+    }
+
+    buildTypes {
+        release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {}

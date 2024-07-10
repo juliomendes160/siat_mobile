@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "774428336576",
+    "project_id": "siat-mobile-d2493",
+    "storage_bucket": "siat-mobile-d2493.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:774428336576:android:593c9697f6453cc1daa825",
+        "android_client_info": {
+          "package_name": "com.example.siat_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAN19Pze5nzh-CZVm4i4tzaUPmElHx54Sw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
