@@ -29,10 +29,10 @@ BODY
 	;
 ```
 
-```yaml
-# siat_mobile\android\app\src\main\res\mimmap-*
+```md
+<!-- siat_mobile\android\app\src\main\res\mimmap-* -->
 
-# Adicionar imagens
+Adicionar imagens
 ```
 
 ```json
@@ -81,7 +81,7 @@ assets:
 ```
 
 ```gradle
-# siat_mobile\android\app\build.gradle
+// siat_mobile\android\app\build.gradle
 
 def app = [:]
 if (project.hasProperty('dart-defines')) {
@@ -115,28 +115,51 @@ defaultConfig {
 }
 ```
 
-```yaml
-# siat_mobile\android\app\src\main\res\mimmap-*
+```md
+<!-- siat_mobile\android\app\src\main\res\mimmap-* -->
 
-# Adicionar imagens
+Adicionar imagens
 ```
 
 ```xml
 <!-- siat_mobile\android\app\src\main\AndroidManifest.xml -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-  <uses-permission android:name="android.permission.INTERNET"/>
-</manifest>
-
 <application
   android:label="${applicationLabel}"
-  android:name="${applicationName}"
-  android:icon="${applicationIcon}"
-  android:usesCleartextTraffic="true">
+  android:icon="${applicationIcon}">
 </application>
 ```
 
 ```dart
+// siat_mobile\lib\main.dart
+
+import 'dart:convert';
+import 'package:flutter/services.dart';
+
+class Environment {
+  static late Map<String, dynamic> _current;
+
+  static Map<String, dynamic> get current => _current;
+
+  static Future<void> loadSettings({required String app}) async {
+    _current = await _loadSettings(app: app);
+  }
+
+  static Future<Map<String, dynamic>> _loadSettings({required String app}) async {
+    String environment = await rootBundle.loadString('assets/settings/$app.json');
+    return json.decode(environment);
+  }
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  const app = String.fromEnvironment('app');
+  await Environment.loadSettings(app: app);
+
+  runApp(const MyApp());
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -180,37 +203,9 @@ flutter pub add webview_flutter
 ```
 
 ```dart
-# siat_mobile\lib\main.dart
+// siat_mobile\lib\main.dart
 
-import 'dart:convert';
-import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-
-class Environment {
-  static late Map<String, dynamic> _current;
-
-  static Map<String, dynamic> get current => _current;
-
-  static Future<void> loadSettings({required String app}) async {
-    _current = await _loadSettings(app: app);
-  }
-
-  static Future<Map<String, dynamic>> _loadSettings({required String app}) async {
-    // print("defaultTargetPlatform:${defaultTargetPlatform.name}");
-    String environment = await rootBundle.loadString('assets/settings/$app.json');
-    return json.decode(environment);
-  }
-
-}
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  const app = String.fromEnvironment('app');
-  await Environment.loadSettings(app: app);
-
-  runApp(const MyApp());
-}
 
 class _MyHomePageState extends State<MyHomePage> {
   /*

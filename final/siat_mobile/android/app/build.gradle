@@ -63,7 +63,7 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         // applicationId "com.example.siat_mobile"
-        applicationId = environment.id
+        applicationId environment.id
         manifestPlaceholders += [
             applicationLabel: environment.label,
             applicationIcon: environment.icon,

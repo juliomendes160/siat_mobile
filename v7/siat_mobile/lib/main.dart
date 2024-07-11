@@ -136,24 +136,24 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> permission(String title, String desc) async {
-  await Alert(
-    context: context,
-    title: title,
-    desc: desc,
-    buttons: [
-      DialogButton(
-        color: Colors.blue,
-        onPressed: () async {
-          await openAppSettings(); 
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
-          }
-        },
-        child: const Text("Configurações", style: TextStyle(color: Colors.white, fontSize: 20)),
-      ),
-    ],
-  ).show();
-}
+    await Alert(
+      context: context,
+      title: title,
+      desc: desc,
+      buttons: [
+        DialogButton(
+          color: Colors.blue,
+          onPressed: () async {
+            await openAppSettings(); 
+            if (mounted){
+              Navigator.pop(context);
+            }
+          },
+          child: const Text("Configurações", style: TextStyle(color: Colors.white, fontSize: 20)),
+        ),
+      ],
+    ).show();
+  }
 
   Future<void> download(NavigationRequest request) async {
     var status = await Permission.notification.status;
