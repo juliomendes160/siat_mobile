@@ -199,7 +199,6 @@ class MyApp extends StatelessWidget {
 # siat_mobile
 
 flutter pub add webview_flutter
-# flutter pub remove webview_flutter
 ```
 
 ```dart
@@ -305,13 +304,12 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 ```
 
-## [permission_handler](https://pub.dev/packages/permission_handler)
+### [permission_handler](https://pub.dev/packages/permission_handler)
 
 ```bash
 # siat_mobile
 
 flutter pub add permission_handler
-# flutter pub remove permission_handler
 ```
 
 ## [rflutter_alert](https://pub.dev/packages/rflutter_alert)
@@ -355,7 +353,6 @@ Future<void> permission(String title, String desc) async {
 # siat_mobile
 
 flutter pub add path_provider
-# flutter pub remove path_provider
 ```
 
 ## [flutter_downloader](https://pub.dev/packages/flutter_downloader)
@@ -364,7 +361,6 @@ flutter pub add path_provider
 # siat_mobile
 
 flutter pub add flutter_downloader
-# flutter pub remove flutter_downloader
 ```
 
 ```dart
@@ -453,7 +449,6 @@ Future<void> download(NavigationRequest request) async {
 # siat_mobile
 
 flutter pub add file_picker
-# flutter pub remove file_picker
 ```
 
 ```dart
@@ -582,7 +577,6 @@ Future<void> upload() async {
 # siat_mobile
 
 flutter pub add url_launcher
-# flutter pub remove url_launcher
 ```
 
 ```dart
@@ -624,8 +618,122 @@ Future<void> openExternalURL(NavigationRequest request) async {
 ```bash
 # siat_mobile
 
-node --version
 npm install -g firebase-tools
-firebase --version
 firebase login
+dart pub global activate flutterfire_cli
+flutterfire configure --project=siat-mobile-d2493 # com.example.siat_mobile
+flutter pub add firebase_core
+```
+
+```dart
+// siat_mobile\lib\main.dart
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:siat_mobile/firebase_options.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  await FlutterDownloader.initialize();
+
+  const app = String.fromEnvironment('app');
+  await Environment.loadSettings(app: app);
+
+  runApp(const MyApp());
+}
+```
+
+```json
+// siat_mobile\android\app\google-services.json
+
+{
+  "package_name": ""
+}
+```
+
+## [Cloud Messaging](https://firebase.google.com/docs/cloud-messaging/?authuser=0&hl=pt&_gl=1*z5c4rx*_ga*MTI1OTg4MDA5My4xNzE4MDIzNTg0*_ga_CW55HF8NVT*MTcyMDgwNDc4Mi4zNC4xLjE3MjA4MDQ5MDQuNDIuMC4w#implementation_paths)
+
+```
+# siat_mobile
+
+flutter pub add firebase_messaging
+```
+
+```dart
+// siat_mobile\lib\main.dart
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  await FirebaseMessaging.instance.setAutoInitEnabled(true);
+
+  await FlutterDownloader.initialize();
+
+  const app = String.fromEnvironment('app');
+  await Environment.loadSettings(app: app);
+
+  runApp(const MyApp());
+}
+
+WebViewController webViewController() {
+    WebViewController controller = WebViewController();
+    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    controller.setNavigationDelegate(NavigationDelegate(
+      onNavigationRequest: (NavigationRequest request) async {
+        Map<String?, String?> tokens = await getTokens();
+
+        controller.runJavaScript('''
+          alert('fcmToken: $tokens[fcmToken]');
+          alert('apnsToken:  $tokens[apnsToken]');
+        ''');
+
+        if (Uri.parse(Environment.current['uri']).host != Uri.parse(request.url).host) {
+          await openExternalURL(request);
+          return NavigationDecision.prevent;
+        }
+        if (request.url.endsWith('.pdf')) {
+          await download(request);
+          return NavigationDecision.prevent;
+        }
+        return NavigationDecision.navigate;
+      },
+      onPageFinished: (String url) async {
+        await listenInputFile();
+      },
+    ));
+    controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
+      await upload();
+    });
+    controller.loadRequest(Uri.parse(Environment.current['uri']));
+    return controller;
+  }
+
+  Future<Map<String?, String?>> getTokens() async {
+    String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+    String? fcmToken = await FirebaseMessaging.instance.getToken();
+    
+    return {
+      'apnsToken': apnsToken,
+      'fcmToken': fcmToken,
+    };
+  }
+```
+
+```xml
+<!-- siat_mobile\android\app\src\main\AndroidManifest.xml -->
+
+<meta-data
+    android:name="firebase_messaging_auto_init_enabled"
+    android:value="false" />
+<meta-data
+    android:name="firebase_analytics_collection_enabled"
+    android:value="false" />
 ```

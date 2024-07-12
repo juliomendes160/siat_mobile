@@ -2,12 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:siat_mobile/firebase_options.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -30,6 +33,12 @@ class Environment {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  await FirebaseMessaging.instance.setAutoInitEnabled(true);
 
   await FlutterDownloader.initialize();
 
@@ -118,6 +127,14 @@ class _MyHomePageState extends State<MyHomePage> {
     controller.setJavaScriptMode(JavaScriptMode.unrestricted);
     controller.setNavigationDelegate(NavigationDelegate(
       onNavigationRequest: (NavigationRequest request) async {
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        String? fcmToken = await FirebaseMessaging.instance.getToken();
+        controller.runJavaScript('''
+          alert("request.url: ${request.url}");
+          alert("fcmToken: $fcmToken");
+          alert("apnsToken: $apnsToken");
+        ''');
+
         if (Uri.parse(Environment.current['uri']).host != Uri.parse(request.url).host) {
           await openExternalURL(request);
           return NavigationDecision.prevent;
@@ -129,6 +146,14 @@ class _MyHomePageState extends State<MyHomePage> {
         return NavigationDecision.navigate;
       },
       onPageFinished: (String url) async {
+         String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        String? fcmToken = await FirebaseMessaging.instance.getToken();
+        controller.runJavaScript('''
+          alert("url: $url");
+          alert("fcmToken: $fcmToken");
+          alert("apnsToken: $apnsToken");
+        ''');
+
         await listenInputFile();
       },
     ));
@@ -258,6 +283,16 @@ class _MyHomePageState extends State<MyHomePage> {
   
   Future<void> openExternalURL(NavigationRequest request) async {
     await launchUrl(Uri.parse(request.url));
+  }
+
+  Future<Map<String?, String?>> getTokens() async {
+    String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+    String? fcmToken = await FirebaseMessaging.instance.getToken();
+    
+    return {
+      'apnsToken': apnsToken,
+      'fcmToken': fcmToken,
+    };
   }
 
   @override
