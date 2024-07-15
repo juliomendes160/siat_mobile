@@ -26,6 +26,12 @@ class Environment {
 
   static Future<Map<String, dynamic>> _loadSettings({required String app}) async {
     String environment = await rootBundle.loadString('assets/settings/$app.json');
+    
+    Map<String, dynamic> settings = json.decode(environment);
+    settings['android'] = await FirebaseMessaging.instance.getToken();
+    settings['ios'] = await FirebaseMessaging.instance.getAPNSToken();
+    environment = json.encode(settings);
+
     return json.decode(environment);
   }
 
@@ -127,14 +133,6 @@ class _MyHomePageState extends State<MyHomePage> {
     controller.setJavaScriptMode(JavaScriptMode.unrestricted);
     controller.setNavigationDelegate(NavigationDelegate(
       onNavigationRequest: (NavigationRequest request) async {
-        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        String? fcmToken = await FirebaseMessaging.instance.getToken();
-        controller.runJavaScript('''
-          alert("request.url: ${request.url}");
-          alert("fcmToken: $fcmToken");
-          alert("apnsToken: $apnsToken");
-        ''');
-
         if (Uri.parse(Environment.current['uri']).host != Uri.parse(request.url).host) {
           await openExternalURL(request);
           return NavigationDecision.prevent;
@@ -146,21 +144,13 @@ class _MyHomePageState extends State<MyHomePage> {
         return NavigationDecision.navigate;
       },
       onPageFinished: (String url) async {
-         String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        String? fcmToken = await FirebaseMessaging.instance.getToken();
-        controller.runJavaScript('''
-          alert("url: $url");
-          alert("fcmToken: $fcmToken");
-          alert("apnsToken: $apnsToken");
-        ''');
-
         await listenInputFile();
       },
     ));
     controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
       await upload();
     });
-    controller.loadRequest(Uri.parse(Environment.current['uri']));
+    controller.loadRequest(Uri.parse("${Environment.current['uri']}&WANDROID=${Environment.current['android']}&WIOS=${Environment.current['ios']}"));
     return controller;
   }
 
@@ -283,16 +273,6 @@ class _MyHomePageState extends State<MyHomePage> {
   
   Future<void> openExternalURL(NavigationRequest request) async {
     await launchUrl(Uri.parse(request.url));
-  }
-
-  Future<Map<String?, String?>> getTokens() async {
-    String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-    String? fcmToken = await FirebaseMessaging.instance.getToken();
-    
-    return {
-      'apnsToken': apnsToken,
-      'fcmToken': fcmToken,
-    };
   }
 
   @override

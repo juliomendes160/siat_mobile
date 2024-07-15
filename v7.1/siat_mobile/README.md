@@ -323,27 +323,30 @@ flutter pub add rflutter_alert
 
 ```dart
 // siat_mobile\lib\main.dart
+
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 
-Future<void> permission(String title, String desc) async {
-  await Alert(
-    context: context,
-    title: title,
-    desc: desc,
-    buttons: [
-      DialogButton(
-        color: Colors.blue,
-        onPressed: () async {
-          await openAppSettings(); 
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
-          }
-        },
-        child: const Text("Configurações", style: TextStyle(color: Colors.white, fontSize: 20)),
-      ),
-    ],
-  ).show();
+class _MyHomePageState extends State<MyHomePage> {
+  Future<void> permission(String title, String desc) async {
+    await Alert(
+      context: context,
+      title: title,
+      desc: desc,
+      buttons: [
+        DialogButton(
+          color: Colors.blue,
+          onPressed: () async {
+            await openAppSettings(); 
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
+          child: const Text("Configurações", style: TextStyle(color: Colors.white, fontSize: 20)),
+        ),
+      ],
+    ).show();
+  }
 }
 ```
 
@@ -457,96 +460,99 @@ flutter pub add file_picker
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 
-WebViewController webViewController() {
-  WebViewController controller = WebViewController();
-  controller.setJavaScriptMode(JavaScriptMode.unrestricted);
-  controller.loadRequest(Uri.parse(Environment.current['uri']));
-  controller.setNavigationDelegate(NavigationDelegate(
-    onNavigationRequest: (NavigationRequest request) async {
-      if (request.url.endsWith('.pdf')) {
-        await download(request);
-        return NavigationDecision.prevent;
-      }
-      return NavigationDecision.navigate;
-    },
-    onPageFinished: (String url) async {
-      await listenInputFile();
-    },
-  ));
-  controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
-    await upload();
-  });
-  return controller;
-}
+class _MyHomePageState extends State<MyHomePage> {
 
-Future<void> listenInputFile() async {
-  controller.runJavaScript('''
-    window[0].frameElement.onload = function () {
-      if (window[0].document.getElementById('FileStream')){
-        window[0].document.getElementById('FileStream').onclick = function() {
-          try { Print.postMessage(''); } catch (error) { }
+  WebViewController webViewController() {
+    WebViewController controller = WebViewController();
+    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    controller.loadRequest(Uri.parse(Environment.current['uri']));
+    controller.setNavigationDelegate(NavigationDelegate(
+      onNavigationRequest: (NavigationRequest request) async {
+        if (request.url.endsWith('.pdf')) {
+          await download(request);
+          return NavigationDecision.prevent;
         }
-      }
-      
-      if (window[0].document.getElementById('upload')) {
-        window[0].document.getElementById('upload').onload = function () {
-          if (window[0][0].document.getElementById('FileStream')) {
-            window[0][0].document.getElementById('FileStream').onclick = function() {
-              try { Print.postMessage(''); } catch (error) { }
+        return NavigationDecision.navigate;
+      },
+      onPageFinished: (String url) async {
+        await listenInputFile();
+      },
+    ));
+    controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
+      await upload();
+    });
+    return controller;
+  }
+
+  Future<void> listenInputFile() async {
+    controller.runJavaScript('''
+      window[0].frameElement.onload = function () {
+        if (window[0].document.getElementById('FileStream')){
+          window[0].document.getElementById('FileStream').onclick = function() {
+            try { Print.postMessage(''); } catch (error) { }
+          }
+        }
+        
+        if (window[0].document.getElementById('upload')) {
+          window[0].document.getElementById('upload').onload = function () {
+            if (window[0][0].document.getElementById('FileStream')) {
+              window[0][0].document.getElementById('FileStream').onclick = function() {
+                try { Print.postMessage(''); } catch (error) { }
+              }
             }
           }
         }
       }
-    }
-  ''');
-}
-
-Future<void> upload() async {
-
-  var status = await Permission.manageExternalStorage.status;
-
-  if (!status.isGranted) {
-    status = await Permission.manageExternalStorage.request();
-
-    if (!status.isGranted) {
-      await permission(
-        context,
-        "Permissão de Armazenamento",
-        "Para executar uploads"
-      );
-      status = await Permission.manageExternalStorage.request();
-    }
+    ''');
   }
 
-  if (status.isGranted) {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
+  Future<void> upload() async {
 
-    if (result != null) {
+    var status = await Permission.manageExternalStorage.status;
 
-      PlatformFile data = result.files.single;
+    if (!status.isGranted) {
+      status = await Permission.manageExternalStorage.request();
 
-      File file = File(data.path!);
-      
-      Uint8List bytes = await file.readAsBytes();
+      if (!status.isGranted) {
+        await permission(
+          context,
+          "Permissão de Armazenamento",
+          "Para executar uploads"
+        );
+        status = await Permission.manageExternalStorage.request();
+      }
+    }
 
-      String content =  base64.encode(bytes);
+    if (status.isGranted) {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
 
-      controller.runJavaScript('''
-        var fileInput = window[0].document.getElementById('FileStream') || window[0][0].document.getElementById('FileStream');
-        if (fileInput) {
-          var base64Data = '$content';
-          var byteCharacters = atob(base64Data); // Decodifica Base64 para uma string de bytes
-          var byteNumbers = new Array(byteCharacters.length);
-          for (var i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
+      if (result != null) {
+
+        PlatformFile data = result.files.single;
+
+        File file = File(data.path!);
+        
+        Uint8List bytes = await file.readAsBytes();
+
+        String content =  base64.encode(bytes);
+
+        controller.runJavaScript('''
+          var fileInput = window[0].document.getElementById('FileStream') || window[0][0].document.getElementById('FileStream');
+          if (fileInput) {
+            var base64Data = '$content';
+            var byteCharacters = atob(base64Data); // Decodifica Base64 para uma string de bytes
+            var byteNumbers = new Array(byteCharacters.length);
+            for (var i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            var byteArray = new Uint8Array(byteNumbers);
+            var file = new File([byteArray], '${data.name}');
+            var dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
           }
-          var byteArray = new Uint8Array(byteNumbers);
-          var file = new File([byteArray], '${data.name}');
-          var dataTransfer = new DataTransfer();
-          dataTransfer.items.add(file);
-          fileInput.files = dataTransfer.files;
-        }
-      ''');
+        ''');
+      }
     }
   }
 }
@@ -582,34 +588,37 @@ flutter pub add url_launcher
 ```dart
 // siat_mobile\lib\main.dart
 
-WebViewController webViewController() {
-  WebViewController controller = WebViewController();
-  controller.setJavaScriptMode(JavaScriptMode.unrestricted);
-  controller.setNavigationDelegate(NavigationDelegate(
-    onNavigationRequest: (NavigationRequest request) async {
-      if (Uri.parse(Environment.current['uri']).host != Uri.parse(request.url).host) {
-        await openExternalURL(request);
-        return NavigationDecision.prevent;
-      }
-      if (request.url.endsWith('.pdf')) {
-        await download(request);
-        return NavigationDecision.prevent;
-      }
-      return NavigationDecision.navigate;
-    },
-    onPageFinished: (String url) async {
-      await listenInputFile();
-    },
-  ));
-  controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
-    await upload();
-  });
-  controller.loadRequest(Uri.parse(Environment.current['uri']));
-  return controller;
-}
+class _MyHomePageState extends State<MyHomePage> {
 
-Future<void> openExternalURL(NavigationRequest request) async {
-  await launchUrl(Uri.parse(request.url));
+  WebViewController webViewController() {
+    WebViewController controller = WebViewController();
+    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    controller.setNavigationDelegate(NavigationDelegate(
+      onNavigationRequest: (NavigationRequest request) async {
+        if (Uri.parse(Environment.current['uri']).host != Uri.parse(request.url).host) {
+          await openExternalURL(request);
+          return NavigationDecision.prevent;
+        }
+        if (request.url.endsWith('.pdf')) {
+          await download(request);
+          return NavigationDecision.prevent;
+        }
+        return NavigationDecision.navigate;
+      },
+      onPageFinished: (String url) async {
+        await listenInputFile();
+      },
+    ));
+    controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
+      await upload();
+    });
+    controller.loadRequest(Uri.parse(Environment.current['uri']));
+    return controller;
+  }
+
+  Future<void> openExternalURL(NavigationRequest request) async {
+    await launchUrl(Uri.parse(request.url));
+  }
 }
 ```
 
@@ -682,19 +691,33 @@ Future<void> main() async {
 
   runApp(const MyApp());
 }
+class Environment {
+  static late Map<String, dynamic> _current;
+
+  static Map<String, dynamic> get current => _current;
+
+  static Future<void> loadSettings({required String app}) async {
+    _current = await _loadSettings(app: app);
+  }
+
+  static Future<Map<String, dynamic>> _loadSettings({required String app}) async {
+    String environment = await rootBundle.loadString('assets/settings/$app.json');
+    
+    Map<String, dynamic> settings = json.decode(environment);
+    settings['android'] = await FirebaseMessaging.instance.getToken();
+    settings['ios'] = await FirebaseMessaging.instance.getAPNSToken();
+    environment = json.encode(settings);
+
+    return json.decode(environment);
+  }
+}
 
 WebViewController webViewController() {
+
     WebViewController controller = WebViewController();
     controller.setJavaScriptMode(JavaScriptMode.unrestricted);
     controller.setNavigationDelegate(NavigationDelegate(
       onNavigationRequest: (NavigationRequest request) async {
-        Map<String?, String?> tokens = await getTokens();
-
-        controller.runJavaScript('''
-          alert('fcmToken: $tokens[fcmToken]');
-          alert('apnsToken:  $tokens[apnsToken]');
-        ''');
-
         if (Uri.parse(Environment.current['uri']).host != Uri.parse(request.url).host) {
           await openExternalURL(request);
           return NavigationDecision.prevent;
@@ -712,18 +735,8 @@ WebViewController webViewController() {
     controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
       await upload();
     });
-    controller.loadRequest(Uri.parse(Environment.current['uri']));
+    controller.loadRequest(Uri.parse("${Environment.current['uri']}&WANDROID=${Environment.current['android']}&WIOS=${Environment.current['ios']}"));
     return controller;
-  }
-
-  Future<Map<String?, String?>> getTokens() async {
-    String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-    String? fcmToken = await FirebaseMessaging.instance.getToken();
-    
-    return {
-      'apnsToken': apnsToken,
-      'fcmToken': fcmToken,
-    };
   }
 ```
 
