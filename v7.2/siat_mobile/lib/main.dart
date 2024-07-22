@@ -14,6 +14,9 @@ import 'package:siat_mobile/firebase_options.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+// flutter run --dart-define=app=default
+// flutter build apk --dart-define=app=default
+
 class Environment {
   static late Map<String, dynamic> _current;
 
@@ -25,7 +28,6 @@ class Environment {
 
   static Future<Map<String, dynamic>> _loadSettings({required String app}) async {
     String environment = await rootBundle.loadString('assets/settings/$app.json');
-    
     Map<String, dynamic> settings = json.decode(environment);
     settings['android'] = await FirebaseMessaging.instance.getToken();
     settings['ios'] = await FirebaseMessaging.instance.getAPNSToken();
@@ -149,7 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
     controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
       await upload();
     });
-    controller.loadRequest(Uri.parse("${Environment.current['uri']}&WANDROID=${Environment.current['android']}&WIOS=${Environment.current['ios']}"));
+    controller.loadRequest(Uri.parse("${Environment.current['uri']}&WANDROID=${Environment.current['android']}&WIOS=${Environment.current['ios']}&WVERSION=${Environment.current['version']}"));
     return controller;
   }
 
