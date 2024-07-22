@@ -199,6 +199,7 @@ class MyApp extends StatelessWidget {
 # siat_mobile
 
 flutter pub add webview_flutter
+# flutter pub remove webview_flutter
 ```
 
 ```dart
@@ -304,12 +305,13 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 ```
 
-### [permission_handler](https://pub.dev/packages/permission_handler)
+## [permission_handler](https://pub.dev/packages/permission_handler)
 
 ```bash
 # siat_mobile
 
 flutter pub add permission_handler
+# flutter pub remove permission_handler
 ```
 
 ## [rflutter_alert](https://pub.dev/packages/rflutter_alert)
@@ -323,30 +325,27 @@ flutter pub add rflutter_alert
 
 ```dart
 // siat_mobile\lib\main.dart
-
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 
-class _MyHomePageState extends State<MyHomePage> {
-  Future<void> permission(String title, String desc) async {
-    await Alert(
-      context: context,
-      title: title,
-      desc: desc,
-      buttons: [
-        DialogButton(
-          color: Colors.blue,
-          onPressed: () async {
-            await openAppSettings(); 
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            }
-          },
-          child: const Text("Configurações", style: TextStyle(color: Colors.white, fontSize: 20)),
-        ),
-      ],
-    ).show();
-  }
+Future<void> permission(BuildContext context, String title, String desc) async {
+  await Alert(
+    context: context,
+    title: title,
+    desc: desc,
+    buttons: [
+      DialogButton(
+        color: Colors.blue,
+        onPressed: () async {
+          await openAppSettings(); 
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+        },
+        child: const Text("Configurações", style: TextStyle(color: Colors.white, fontSize: 20)),
+      ),
+    ],
+  ).show();
 }
 ```
 
@@ -356,6 +355,7 @@ class _MyHomePageState extends State<MyHomePage> {
 # siat_mobile
 
 flutter pub add path_provider
+# flutter pub remove path_provider
 ```
 
 ## [flutter_downloader](https://pub.dev/packages/flutter_downloader)
@@ -364,6 +364,7 @@ flutter pub add path_provider
 # siat_mobile
 
 flutter pub add flutter_downloader
+# flutter pub remove flutter_downloader
 ```
 
 ```dart
@@ -390,7 +391,7 @@ WebViewController webViewController() {
   controller.setNavigationDelegate(NavigationDelegate(
     onNavigationRequest: (NavigationRequest request) async {
       if (request.url.endsWith('.pdf')) {
-        await download(request);
+        await download(request.url);
         return NavigationDecision.prevent;
       }
       return NavigationDecision.navigate;
@@ -399,7 +400,7 @@ WebViewController webViewController() {
   return controller;
 }
 
-Future<void> download(NavigationRequest request) async {
+Future<void> download(String url) async {
     var status = await Permission.notification.status;
 
     if (!status.isGranted) {
@@ -452,6 +453,7 @@ Future<void> download(NavigationRequest request) async {
 # siat_mobile
 
 flutter pub add file_picker
+# flutter pub remove file_picker
 ```
 
 ```dart
@@ -460,99 +462,96 @@ flutter pub add file_picker
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 
-class _MyHomePageState extends State<MyHomePage> {
+WebViewController webViewController() {
+  WebViewController controller = WebViewController();
+  controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+  controller.loadRequest(Uri.parse(Environment.current['uri']));
+  controller.setNavigationDelegate(NavigationDelegate(
+    onNavigationRequest: (NavigationRequest request) async {
+      if (request.url.endsWith('.pdf')) {
+        await download(request.url);
+        return NavigationDecision.prevent;
+      }
+      return NavigationDecision.navigate;
+    },
+    onPageFinished: (String url) async {
+      await inputFile();
+    },
+  ));
+  controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
+    await upload(context, controller);
+  });
+  return controller;
+}
 
-  WebViewController webViewController() {
-    WebViewController controller = WebViewController();
-    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
-    controller.loadRequest(Uri.parse(Environment.current['uri']));
-    controller.setNavigationDelegate(NavigationDelegate(
-      onNavigationRequest: (NavigationRequest request) async {
-        if (request.url.endsWith('.pdf')) {
-          await download(request);
-          return NavigationDecision.prevent;
+Future<void> inputFile(BuildContext context, WebViewController controller) async {
+  controller.runJavaScript('''
+    window[0].frameElement.onload = function () {
+      if (window[0].document.getElementById('FileStream')){
+        window[0].document.getElementById('FileStream').onclick = function() {
+          try { Print.postMessage(''); } catch (error) { }
         }
-        return NavigationDecision.navigate;
-      },
-      onPageFinished: (String url) async {
-        await listenInputFile();
-      },
-    ));
-    controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
-      await upload();
-    });
-    return controller;
-  }
-
-  Future<void> listenInputFile() async {
-    controller.runJavaScript('''
-      window[0].frameElement.onload = function () {
-        if (window[0].document.getElementById('FileStream')){
-          window[0].document.getElementById('FileStream').onclick = function() {
-            try { Print.postMessage(''); } catch (error) { }
-          }
-        }
-        
-        if (window[0].document.getElementById('upload')) {
-          window[0].document.getElementById('upload').onload = function () {
-            if (window[0][0].document.getElementById('FileStream')) {
-              window[0][0].document.getElementById('FileStream').onclick = function() {
-                try { Print.postMessage(''); } catch (error) { }
-              }
+      }
+      
+      if (window[0].document.getElementById('upload')) {
+        window[0].document.getElementById('upload').onload = function () {
+          if (window[0][0].document.getElementById('FileStream')) {
+            window[0][0].document.getElementById('FileStream').onclick = function() {
+              try { Print.postMessage(''); } catch (error) { }
             }
           }
         }
-      }
-    ''');
-  }
-
-  Future<void> upload() async {
-
-    var status = await Permission.manageExternalStorage.status;
-
-    if (!status.isGranted) {
-      status = await Permission.manageExternalStorage.request();
-
-      if (!status.isGranted) {
-        await permission(
-          context,
-          "Permissão de Armazenamento",
-          "Para executar uploads"
-        );
-        status = await Permission.manageExternalStorage.request();
       }
     }
+  ''');
+}
 
-    if (status.isGranted) {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
+Future<void> upload(BuildContext context, WebViewController controller) async {
 
-      if (result != null) {
+  var status = await Permission.manageExternalStorage.status;
 
-        PlatformFile data = result.files.single;
+  if (!status.isGranted) {
+    status = await Permission.manageExternalStorage.request();
 
-        File file = File(data.path!);
-        
-        Uint8List bytes = await file.readAsBytes();
+    if (!status.isGranted) {
+      await permission(
+        context,
+        "Permissão de Armazenamento",
+        "Para executar uploads"
+      );
+      status = await Permission.manageExternalStorage.request();
+    }
+  }
 
-        String content =  base64.encode(bytes);
+  if (status.isGranted) {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
 
-        controller.runJavaScript('''
-          var fileInput = window[0].document.getElementById('FileStream') || window[0][0].document.getElementById('FileStream');
-          if (fileInput) {
-            var base64Data = '$content';
-            var byteCharacters = atob(base64Data); // Decodifica Base64 para uma string de bytes
-            var byteNumbers = new Array(byteCharacters.length);
-            for (var i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            var byteArray = new Uint8Array(byteNumbers);
-            var file = new File([byteArray], '${data.name}');
-            var dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            fileInput.files = dataTransfer.files;
+    if (result != null) {
+
+      PlatformFile data = result.files.single;
+
+      File file = File(data.path!);
+      
+      Uint8List bytes = await file.readAsBytes();
+
+      String content =  base64.encode(bytes);
+
+      controller.runJavaScript('''
+        var fileInput = window[0].document.getElementById('FileStream') || window[0][0].document.getElementById('FileStream');
+        if (fileInput) {
+          var base64Data = '$content';
+          var byteCharacters = atob(base64Data); // Decodifica Base64 para uma string de bytes
+          var byteNumbers = new Array(byteCharacters.length);
+          for (var i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
-        ''');
-      }
+          var byteArray = new Uint8Array(byteNumbers);
+          var file = new File([byteArray], '${data.name}');
+          var dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          fileInput.files = dataTransfer.files;
+        }
+      ''');
     }
   }
 }
@@ -577,48 +576,41 @@ class _MyHomePageState extends State<MyHomePage> {
 </manifest>
 ```
 
-## [url_launcher](https://pub.dev/packages/url_launcher)
+## *** [url_launcher](https://pub.dev/packages/url_launcher)
 
 ```bash
 # siat_mobile
 
 flutter pub add url_launcher
+# flutter pub remove url_launcher
 ```
 
 ```dart
 // siat_mobile\lib\main.dart
 
-class _MyHomePageState extends State<MyHomePage> {
+WebViewController webViewController() {
+  WebViewController controller = WebViewController();
+  controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+  controller.loadRequest(Uri.parse(Environment.current['uri']));
+  controller.setNavigationDelegate(NavigationDelegate(
+    onNavigationRequest: (NavigationRequest request) async {
+      if (await externalURL(context, request)) {
+        return NavigationDecision.prevent;
+      }
 
-  WebViewController webViewController() {
-    WebViewController controller = WebViewController();
-    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
-    controller.setNavigationDelegate(NavigationDelegate(
-      onNavigationRequest: (NavigationRequest request) async {
-        if (Uri.parse(Environment.current['uri']).host != Uri.parse(request.url).host) {
-          await openExternalURL(request);
-          return NavigationDecision.prevent;
-        }
-        if (request.url.endsWith('.pdf')) {
-          await download(request);
-          return NavigationDecision.prevent;
-        }
-        return NavigationDecision.navigate;
-      },
-      onPageFinished: (String url) async {
-        await listenInputFile();
-      },
-    ));
-    controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
-      await upload();
-    });
-    controller.loadRequest(Uri.parse(Environment.current['uri']));
-    return controller;
-  }
+      return NavigationDecision.navigate;
+    },
+  ));
 
-  Future<void> openExternalURL(NavigationRequest request) async {
+  return controller;
+}
+
+Future<bool> externalURL(BuildContext context, NavigationRequest request) async {
+  if (Uri.parse(Environment.current['uri']).host != Uri.parse(request.url).host) {
     await launchUrl(Uri.parse(request.url));
+    return true;
   }
+  return false;
 }
 ```
 
@@ -662,91 +654,4 @@ Future<void> main() async {
 {
   "package_name": ""
 }
-```
-
-## [Cloud Messaging](https://firebase.google.com/docs/cloud-messaging/?authuser=0&hl=pt&_gl=1*z5c4rx*_ga*MTI1OTg4MDA5My4xNzE4MDIzNTg0*_ga_CW55HF8NVT*MTcyMDgwNDc4Mi4zNC4xLjE3MjA4MDQ5MDQuNDIuMC4w#implementation_paths)
-
-```
-# siat_mobile
-
-flutter pub add firebase_messaging
-```
-
-```dart
-// siat_mobile\lib\main.dart
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  await FirebaseMessaging.instance.setAutoInitEnabled(true);
-
-  await FlutterDownloader.initialize();
-
-  const app = String.fromEnvironment('app');
-  await Environment.loadSettings(app: app);
-
-  runApp(const MyApp());
-}
-class Environment {
-  static late Map<String, dynamic> _current;
-
-  static Map<String, dynamic> get current => _current;
-
-  static Future<void> loadSettings({required String app}) async {
-    _current = await _loadSettings(app: app);
-  }
-
-  static Future<Map<String, dynamic>> _loadSettings({required String app}) async {
-    String environment = await rootBundle.loadString('assets/settings/$app.json');
-    
-    Map<String, dynamic> settings = json.decode(environment);
-    settings['android'] = await FirebaseMessaging.instance.getToken();
-    settings['ios'] = await FirebaseMessaging.instance.getAPNSToken();
-    environment = json.encode(settings);
-
-    return json.decode(environment);
-  }
-}
-
-WebViewController webViewController() {
-
-    WebViewController controller = WebViewController();
-    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
-    controller.setNavigationDelegate(NavigationDelegate(
-      onNavigationRequest: (NavigationRequest request) async {
-        if (Uri.parse(Environment.current['uri']).host != Uri.parse(request.url).host) {
-          await openExternalURL(request);
-          return NavigationDecision.prevent;
-        }
-        if (request.url.endsWith('.pdf')) {
-          await download(request);
-          return NavigationDecision.prevent;
-        }
-        return NavigationDecision.navigate;
-      },
-      onPageFinished: (String url) async {
-        await listenInputFile();
-      },
-    ));
-    controller.addJavaScriptChannel('Print', onMessageReceived: (onMessageReceived) async {
-      await upload();
-    });
-    controller.loadRequest(Uri.parse("${Environment.current['uri']}&WANDROID=${Environment.current['android']}&WIOS=${Environment.current['ios']}"));
-    return controller;
-  }
-```
-
-```xml
-<!-- siat_mobile\android\app\src\main\AndroidManifest.xml -->
-
-<meta-data
-    android:name="firebase_messaging_auto_init_enabled"
-    android:value="false" />
-<meta-data
-    android:name="firebase_analytics_collection_enabled"
-    android:value="false" />
 ```
